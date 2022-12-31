@@ -9,29 +9,21 @@ if (response.IsSuccessStatusCode)
 {
     string rssData = await response.Content.ReadAsStringAsync();
     XDocument rssDoc = XDocument.Parse(rssData);
+    XNamespace ns = "http://www.w3.org/2005/Atom";
 
-    var entries = rssDoc.Descendants("entry").Select(item => new RssEntry
-    {
-        Title = (string)item.Element("title"),
-        Link = (string)item.Element("link"),
-        PubDate = DateTime.Parse((string)item.Element("pubDate")),
-        Description = (string)item.Element("description")
-    });
+    // Select only entry element from rssDoc with LINQ
+    var entries = from item in rssDoc.Descendants(ns + "entry")
+                  select new RssEntry
+                  {
+                      Title = (string)item.Element(ns + "title"),
+                      Link = (string)item.Element(ns + "link").Attribute("href"),
+                      PubDate = DateTime.Parse((string)item.Element(ns + "published")),
+                      Description = (string)item.Element(ns + "content")
+                  };
 
-    // var entries = from item in rssDoc.Descendants("item")
-                //   select new RssEntry
-                //   {
-                //       Title = (string)item.Element("title"),
-                //       Link = (string)item.Element("link"),
-                //       PubDate = DateTime.Parse((string)item.Element("pubDate")),
-                //       Description = (string)item.Element("description")
-                //   };
+
     Console.WriteLine("Entries: " + entries.Count());
-    foreach (var entry in entries)
-    {
-        //write to console
-        // Console.WriteLine(entry.Title);
-    }
+    
 }
 else
 {
@@ -40,9 +32,10 @@ else
 }
 
 public class RssEntry
-    {
-        public string Title { get; set; }
-        public string Link { get; set; }
-        public DateTime PubDate { get; set; }
-        public string Description { get; set; }
-    }
+{
+    public string? Id { get; set; }
+    public string? Title { get; set; }
+    public string? Link { get; set; }
+    public DateTime? PubDate { get; set; }
+    public string? Description { get; set; }
+}

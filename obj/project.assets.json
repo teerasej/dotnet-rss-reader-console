@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/teerasejjiraphatchandej/Desktop/dotnet-rss-reader/dotnet-rss-reader.csproj",
+      "projectUniqueName": "/Users/teerasejjiraphatchandej/Desktop/untitled folder/dotnet-rss-reader-console/dotnet-rss-reader.csproj",
       "projectName": "dotnet-rss-reader",
-      "projectPath": "/Users/teerasejjiraphatchandej/Desktop/dotnet-rss-reader/dotnet-rss-reader.csproj",
+      "projectPath": "/Users/teerasejjiraphatchandej/Desktop/untitled folder/dotnet-rss-reader-console/dotnet-rss-reader.csproj",
       "packagesPath": "/Users/teerasejjiraphatchandej/.nuget/packages/",
-      "outputPath": "/Users/teerasejjiraphatchandej/Desktop/dotnet-rss-reader/obj/",
+      "outputPath": "/Users/teerasejjiraphatchandej/Desktop/untitled folder/dotnet-rss-reader-console/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/teerasejjiraphatchandej/.nuget/NuGet/NuGet.Config"
@@ -60,7 +60,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/6.0.400/RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.100/RuntimeIdentifierGraph.json"
       }
     }
   }
