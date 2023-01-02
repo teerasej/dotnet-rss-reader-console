@@ -1,89 +1,41 @@
-using System.Xml.Linq;
+// Type: C#
+using System.Text.Json.Serialization;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Fluent;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
-using Newtonsoft.Json;
 
-var configuration =  new ConfigurationBuilder().AddJsonFile($"appsettings.json");
-            
+// ทำการอ่านไฟล์ appsettings.json
+var configuration = new ConfigurationBuilder().AddJsonFile($"appsettings.json");
 var config = configuration.Build();
 
-
-string rssUrl = "https://www.google.com/alerts/feeds/14191009605607154603/12762626758933925224";
+// ดึงค่า configuration จาก appsettings.json
 string connectionString = config["CosmosDB:ConnectionString"];
 string databaseId = config["CosmosDB:DatabaseId"];
 string containerId = config["CosmosDB:ContainerId"];
 string partitionKeyPath = config["CosmosDB:PartitionKeyPath"];
 
+// เชื่อมต่อ Cosmos DB ด้วย Connection String
 CosmosClient client = new CosmosClient(connectionString);
 
+// สร้าง database ด้วย Id ที่กำหนด
+Database database = await client.CreateDatabaseIfNotExistsAsync(databaseId);
 
-HttpClient httpClient = new HttpClient();
-HttpResponseMessage response = await httpClient.GetAsync(rssUrl);
-
-if (response.IsSuccessStatusCode)
-{
-    string rssData = await response.Content.ReadAsStringAsync();
-    XDocument rssDoc = XDocument.Parse(rssData);
-    XNamespace ns = "http://www.w3.org/2005/Atom";
-
-    // Select only entry element from rssDoc with LINQ
-    var entries = from item in rssDoc.Descendants(ns + "entry")
-                  select new RssEntry
-                  {
-                      Title = (string)item.Element(ns + "title"),
-                      Link = (string)item.Element(ns + "link").Attribute("href"),
-                      PubDate = DateTime.Parse((string)item.Element(ns + "published")),
-                      Description = (string)item.Element(ns + "content")
-                  };
+// สร้าง container ด้วย Id ที่กำหนด พร้อมกำหนดว่า property ไหนจะเป็น partition key
+Container container = await database.CreateContainerIfNotExistsAsync(containerId, partitionKeyPath);
 
 
-    Console.WriteLine("Entries: " + entries.Count());
+// สร้าง object ของ Product record และส่งข้อมูลไปยัง Cosmos DB
+Product product = new(
+    Guid.NewGuid().ToString(),
+    "Test"
+);
 
-    Database database = await client.CreateDatabaseIfNotExistsAsync(databaseId);
-    Container container = await database.CreateContainerIfNotExistsAsync(containerId, partitionKeyPath);
+// ส่งข้อมูลไปยัง Cosmos DB และกำหนด partition key ด้วย Id ของ object
+var createItemResponse = await container.CreateItemAsync<Product>(product, new PartitionKey(product.id));
 
-    foreach (var entry in entries)
-    {
-        // set new guid for entry's id
-        entry.Id = Guid.NewGuid().ToString();
 
-        // replace <b> in entry.title with empty string
-        entry.Title = entry.Title.Replace("<b>", "");
-        entry.Title = entry.Title.Replace("</b>", "");
-
-        // replace <b> in entry.description with empty string
-        entry.Description = entry.Description.Replace("<b>", "");
-        entry.Description = entry.Description.Replace("</b>", "");
-
-        var createItemResponse = await container.CreateItemAsync<RssEntry>(entry, new PartitionKey(entry.Link));
-        
-        if(createItemResponse.StatusCode != System.Net.HttpStatusCode.Created) {
-            Console.WriteLine("Error: " + createItemResponse.StatusCode);
-        }
-    }
-}
-else
-{
-    // write error to console
-    Console.WriteLine("Error: " + response.StatusCode);
-}
-
-public class RssEntry
-{
-    [JsonProperty(PropertyName = "id")]
-    public string? Id { get; set; }
-
-    [JsonProperty(PropertyName = "title")]
-    public string? Title { get; set; }
-
-    [JsonProperty(PropertyName = "link")]
-    public string? Link { get; set; }
-
-    [JsonProperty(PropertyName = "pubDate")]
-    public DateTime? PubDate { get; set; }
-
-    [JsonProperty(PropertyName = "description")]
-    public string? Description { get; set; }
-}
+// ประกาศ Product record เพื่อเก็บข้อมูลที่จะส่งไปยัง Cosmos DB
+public record Product
+(
+     string id ,
+     string title
+);
